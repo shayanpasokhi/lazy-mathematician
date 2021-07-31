@@ -1,3 +1,4 @@
+
 # lazy-mathematician
 
 If you are a lazy mathematician, this interpreter will help you
@@ -97,3 +98,8 @@ Sample output:
 1.000
 variable error
 ```
+
+---
+
+ - code.py -> Use regex
+ - code2.py -> Use token and lexer for interpretation

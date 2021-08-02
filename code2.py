@@ -1,7 +1,7 @@
 import sys
 import math
 
-STRING, ASSIGNMENT, NUMBER, END, LPAREN, COMMA, RPAREN, EOF = 'STRING', 'ASSIGNMENT', 'NUMBER', 'END', 'LPAREN', 'COMMA', 'RPAREN', 'EOF'
+ID, ASSIGN, NUMBER, END, LPAREN, COMMA, RPAREN, ADD, SUB, MUL, DIV, POW, GCD, LOG, EOF = 'ID', 'ASSIGN', 'NUMBER', 'END', 'LPAREN', 'COMMA', 'RPAREN', 'ADD', 'SUB', 'MUL', 'DIV', 'POW', 'GCD', 'LOG', 'EOF'
 
 class Token:
     def __init__(self, type, value):
@@ -14,14 +14,24 @@ class Token:
     def __repr__(self):
         return self.__str__()
 
+RESERVED_KEYWORD = {
+    ADD.lower(): Token(ADD, ADD.lower()),
+    SUB.lower(): Token(SUB, SUB.lower()),
+    MUL.lower(): Token(MUL, MUL.lower()),
+    DIV.lower(): Token(DIV, DIV.lower()),
+    POW.lower(): Token(POW, POW.lower()),
+    GCD.lower(): Token(GCD, GCD.lower()),
+    LOG.lower(): Token(LOG, LOG.lower())
+} 
+
 class Lexer:
     def __init__(self, text):
         self.text = text
         self.pos = 0
         self.currentChar = self.text[self.pos]
 
-    def error(self):
-        print('Invalid character')
+    def error(self, message='Invalid character'):
+        print(message)
         sys.exit()
 
     def advance(self):
@@ -31,6 +41,14 @@ class Lexer:
             self.currentChar = None
         else:
             self.currentChar = self.text[self.pos]
+
+    def peek(self):
+        peekPos = self.pos + 1
+
+        if peekPos > len(self.text) - 1:
+            return None
+        else:
+            return self.text[peekPos]
 
     def skipWhitespace(self):
         while self.currentChar is not None and self.currentChar.isspace():
@@ -51,14 +69,14 @@ class Lexer:
         
         return float(result)
 
-    def string(self):
+    def _id(self):
         result = ''
 
         while self.currentChar is not None and (self.currentChar.isalpha() or self.currentChar == '_'):
             result += self.currentChar
             self.advance()
         
-        return result
+        return RESERVED_KEYWORD.get(result, Token(ID, result))
 
     def getNextToken(self):
         while self.currentChar is not None:
@@ -68,25 +86,16 @@ class Lexer:
                 continue
 
             if self.currentChar.isalpha() or self.currentChar == '_':
-                string = self.string()
-
-                if string == 'end':
-                    return Token(END, string)
-
-                return Token(STRING, string)
+                return self._id()
 
             if self.currentChar.isdigit():
                 return Token(NUMBER, self.number())
 
-            if self.currentChar == ':':
+            if self.currentChar == ':' and self.peek() == '=':
+                self.advance()
                 self.advance()
 
-                if self.currentChar == '=':
-                    self.advance()
-
-                    return Token(ASSIGNMENT, ':=')
-                else:
-                    self.error()
+                return Token(ASSIGN, ':=')
 
             if self.currentChar == '(':
                 self.advance()

@@ -102,4 +102,4 @@ variable error
 ---
 
  - code.py -> Use regex
- - code2.py -> Use AST
+ - code2.py -> Use token and lexer for interpretation (syntax-directed interpreters)

@@ -150,7 +150,7 @@ class Error(AST):
 
 class Parser:
     def __init__(self, lexer):
-        self.lexer = Lexer
+        self.lexer = lexer
         self.currentToken = self.lexer.getNextToken()
 
     def error(self, message='Invalid syntax'):
@@ -204,7 +204,7 @@ class Parser:
                 return Error(message)
             return Num(token)
         else:
-            node = self.variable()
+            node = self.function()
 
             if self.currentToken.type == LPAREN:
                 self.eat(LPAREN)
@@ -223,7 +223,7 @@ class Parser:
                     message = str(self.formatNumber(arg2)) + str(self.currentToken.value) + ' is not a number'
 
                     return Error(message)
-                root.arg.append(self.arg())
+                root.arg.append(arg2)
                 self.eat(RPAREN)
 
                 return root
@@ -231,6 +231,31 @@ class Parser:
                 self.error()
 
             return node
+
+    def function(self):
+        if self.currentToken.type == ADD:
+            token = self.currentToken
+            self.eat(ADD)
+        elif self.currentToken.type == SUB:
+            token = self.currentToken
+            self.eat(SUB)
+        elif self.currentToken.type == MUL:
+            token = self.currentToken
+            self.eat(MUL)
+        elif self.currentToken.type == DIV:
+            token = self.currentToken
+            self.eat(DIV)
+        elif self.currentToken.type == POW:
+            token = self.currentToken
+            self.eat(POW)
+        elif self.currentToken.type == GCD:
+            token = self.currentToken
+            self.eat(GCD)
+        else:
+            token = self.currentToken
+            self.eat(LOG)
+
+        return token
 
     def arg(self):
         if self.currentToken.type == NUMBER:

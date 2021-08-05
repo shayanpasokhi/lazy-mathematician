@@ -148,6 +148,109 @@ class Error(AST):
     def __init__(self, message):
         self.message = message
 
+class Parser:
+    def __init__(self, lexer):
+        self.lexer = Lexer
+        self.currentToken = self.lexer.getNextToken()
+
+    def error(self, message='Invalid syntax'):
+        print(message)
+        sys.exit()
+
+    def eat(self, tokenType):
+        if self.currentToken.type == tokenType:
+            self.currentToken = self.lexer.getNextToken()
+        else:
+            self.error()
+
+    def formatNumber(self, number):
+        if number % 1 == 0:
+            return int(number)
+        else:
+            return number
+
+    def program(self):
+        if self.currentToken.type == END:
+            self.eat(END)
+
+            return End()
+        else:
+            node = self.variable()
+
+            if self.currentToken.type == ASSIGN:
+                token = self.currentToken
+                self.eat(ASSIGN)
+
+                return Assign(node, token, self.expr())
+            elif self.currentToken.type != EOF:
+                self.error()
+
+            return node
+
+    def variable(self):
+        token = self.currentToken
+        self.eat(ID)
+
+        return Var(token)
+
+    def expr(self):
+        if self.currentToken.type == NUMBER:
+            token = self.currentToken
+            self.eat(NUMBER)
+
+            if self.currentToken.type != EOF:
+                message = str(self.formatNumber(token.value)) + str(self.currentToken.value) + ' is not a number'
+
+                return Error(message)
+            return Num(token)
+        else:
+            node = self.variable()
+
+            if self.currentToken.type == LPAREN:
+                self.eat(LPAREN)
+                root = Function(node)
+                arg1 = self.arg()
+
+                if self.currentToken.type != COMMA:
+                    message = str(self.formatNumber(arg1)) + str(self.currentToken.value) + ' is not a number'
+
+                    return Error(message)
+                root.arg.append(arg1)
+                self.eat(COMMA)
+                arg2 = self.arg()
+
+                if self.currentToken.type != RPAREN:
+                    message = str(self.formatNumber(arg2)) + str(self.currentToken.value) + ' is not a number'
+
+                    return Error(message)
+                root.arg.append(self.arg())
+                self.eat(RPAREN)
+
+                return root
+            elif self.currentToken.type != EOF:
+                self.error()
+
+            return node
+
+    def arg(self):
+        if self.currentToken.type == NUMBER:
+            token = self.currentToken
+            self.eat(NUMBER)
+
+            return Num(token)
+        else:
+            node = self.variable()
+
+            return node
+
+    def parse(self):
+        node = self.program()
+
+        if self.currentToken.type != EOF:
+            self.error()
+
+        return node
+
 class Interpreter:
     def __init__(self, lexer, variableDict):
         self.lexer = lexer

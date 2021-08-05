@@ -116,6 +116,31 @@ class Lexer:
 
         return Token(EOF, None)
 
+class AST:
+    pass
+
+class Assign(AST):
+    def __init__(self, left, op, right):
+        self.left = left
+        self.op = op
+        self.right = right
+
+class Var(AST):
+    def __init__(self, token):
+        self.token = token
+        self.value = token.value
+
+class Num(AST):
+    def __init__(self, token):
+        self.token = token
+        self.value = token.value
+
+class Function(AST):
+    def __init__(self, token):
+        self.token = token
+        self.value = value
+        self.arg = []
+
 class Interpreter:
     def __init__(self, lexer, variableDict):
         self.lexer = lexer

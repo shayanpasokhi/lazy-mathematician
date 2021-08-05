@@ -144,6 +144,10 @@ class Function(AST):
 class End(AST):
     pass
 
+class Error(AST):
+    def __init__(self, message):
+        self.message = message
+
 class Interpreter:
     def __init__(self, lexer, variableDict):
         self.lexer = lexer

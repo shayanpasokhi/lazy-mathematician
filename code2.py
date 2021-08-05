@@ -138,7 +138,7 @@ class Num(AST):
 class Function(AST):
     def __init__(self, token):
         self.token = token
-        self.value = value
+        self.value = token.value
         self.arg = []
 
 class End(AST):

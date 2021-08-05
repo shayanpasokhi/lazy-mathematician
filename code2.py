@@ -141,6 +141,9 @@ class Function(AST):
         self.value = value
         self.arg = []
 
+class End(AST):
+    pass
+
 class Interpreter:
     def __init__(self, lexer, variableDict):
         self.lexer = lexer

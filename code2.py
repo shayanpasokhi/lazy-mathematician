@@ -21,7 +21,8 @@ RESERVED_KEYWORD = {
     DIV.lower(): Token(DIV, DIV.lower()),
     POW.lower(): Token(POW, POW.lower()),
     GCD.lower(): Token(GCD, GCD.lower()),
-    LOG.lower(): Token(LOG, LOG.lower())
+    LOG.lower(): Token(LOG, LOG.lower()),
+    END.lower(): Token(END, END.lower())
 } 
 
 class Lexer:

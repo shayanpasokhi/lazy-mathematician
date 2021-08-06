@@ -433,8 +433,6 @@ class Interpreter(NodeVisitor):
         return self.visit(tree)
 
 def main():
-    variableDict = {}
-
     while True:
         try:
             text = input('')
@@ -444,12 +442,11 @@ def main():
             continue
 
         lexer = Lexer(text)
-        interpreter = Interpreter(lexer, variableDict)
-        result = interpreter.expr()
+        parser = Parser(lexer)
+        interpreter = Interpreter(parser)
+        result = interpreter.interpret()
         
-        if isinstance(result, dict):
-             variableDict = result
-        else:
+        if result is not None:
             print(result)
 
 if __name__ == '__main__':

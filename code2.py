@@ -23,7 +23,7 @@ RESERVED_KEYWORD = {
     GCD.lower(): Token(GCD, GCD.lower()),
     LOG.lower(): Token(LOG, LOG.lower()),
     END.lower(): Token(END, END.lower())
-} 
+}
 
 class Lexer:
     def __init__(self, text):
@@ -281,172 +281,156 @@ class Parser:
 
         return node
 
-class Interpreter:
-    def __init__(self, lexer, variableDict):
-        self.lexer = lexer
-        self.currentToken = self.lexer.getNextToken()
-        self.variableDict = variableDict
+class NodeVisitor:
+    def visit(self, node):
+        methodName = 'visit' + type(node).__name__
+        visitor = getattr(self, methodName, self.genericVisit)
 
-    def error(self):
-        print('Invalid syntax')
+        return visitor(node)
+
+    def genericVisit(self, node):
+        print('No visit{} method'.format(type(node).__name__))
         sys.exit()
 
-    def getVariable(self, name):
-        if name in self.variableDict:
-            return self.variableDict[name]
+class Interpreter(NodeVisitor):
+    GLOBAL_SCOPE = {}
 
-        return None
-
-    def calculator(self, name, arg1, arg2):
-        if name == 'add':
-            return arg1 + arg2
-        elif name == 'sub':
-            return arg1 - arg2
-        elif name == 'mul':
-            return arg1 * arg2
-        elif name == 'div':
-            return arg1 / arg2
-        elif name == 'pow':
-            return math.pow(arg1, arg2)
-        elif name == 'gcd':
-            return math.gcd(int(arg1), int(arg2))
-        elif name == 'log':
-            return math.log(arg1, arg2)
-        else:
-            return None
-
-    def printNumber(self, number):
-        return '{:.3f}'.format(number)
-
-    def setVariable(self, name, value):
-        self.variableDict[name] = value
-
-        return self.variableDict
-
-    def eat(self, tokenType):
-        if self.currentToken.type == tokenType:
-            self.currentToken = self.lexer.getNextToken()
-        else:
-            self.error()
-
-    def variable(self):
-        token = self.currentToken
-        self.eat(STRING)
-
-        return token.value
-
-    def arg(self):
-        if self.currentToken.type == NUMBER:
-            token = self.currentToken
-            self.eat(NUMBER)
-
-            return token.value
-        else:
-            variable = self.variable()
-
-            return variable
+    def __init__(self, parser):
+        self.parser = parser
 
     def formatNumber(self, number):
-        if number % 1 == 0:
-            return int(number)
+        return '{:.3f}'.format(number)
+
+    def visitAssign(self, node):
+        varName = node.left.value
+        right = self.visit(node.right)
+
+        if right == 'variable not found' or right == 'variable error':
+            return 'variable error'
+        elif 'is not a number' in str(right):
+            return right
+        elif right == 'function not found':
+            return right
+
+        self.GLOBAL_SCOPE[varName] = self.visit(node.right)
+
+    def visitVar(self, node):
+        varName = node.value
+        val = self.GLOBAL_SCOPE.get(varName)
+        
+        if val is None:
+            return 'variable not found'
         else:
-            return number
+            return self.formatNumber(val)
 
-    def expr(self):
-        if self.currentToken.type == END:
-            self.eat(END)
-            sys.exit()
+    def visitNum(self, node):
+        return node.value
+    
+    def visitFunction(self, node):
+        if node.value == 'add':
+            arg1 = self.visit(node.arg[0])
+            arg2 = self.visit(node.arg[1])
+
+            if arg1 == 'variable not found' or arg2 == 'variable not found':
+                return 'variable error'
+
+            if 'is not a number' in str(arg1):
+                return arg1
+            elif 'is not a number' in str(arg2):
+                return arg2
+
+            return float(arg1) + float(arg2)
+        elif node.value == 'sub':
+            arg1 = self.visit(node.arg[0])
+            arg2 = self.visit(node.arg[1])
+
+            if arg1 == 'variable not found' or arg2 == 'variable not found':
+                return 'variable error'
+
+            if 'is not a number' in str(arg1):
+                return arg1
+            elif 'is not a number' in str(arg2):
+                return arg2
+
+            return float(arg1) - float(arg2)
+        elif node.value == 'mul':
+            arg1 = self.visit(node.arg[0])
+            arg2 = self.visit(node.arg[1])
+
+            if arg1 == 'variable not found' or arg2 == 'variable not found':
+                return 'variable error'
+
+            if 'is not a number' in str(arg1):
+                return arg1
+            elif 'is not a number' in str(arg2):
+                return arg2
+
+            return float(arg1) * float(arg2)
+        elif node.value == 'div':
+            arg1 = self.visit(node.arg[0])
+            arg2 = self.visit(node.arg[1])
+
+            if arg1 == 'variable not found' or arg2 == 'variable not found':
+                return 'variable error'
+
+            if 'is not a number' in str(arg1):
+                return arg1
+            elif 'is not a number' in str(arg2):
+                return arg2
+
+            return float(arg1) / float(arg2)
+        elif node.value == 'pow':
+            arg1 = self.visit(node.arg[0])
+            arg2 = self.visit(node.arg[1])
+
+            if arg1 == 'variable not found' or arg2 == 'variable not found':
+                return 'variable error'
+
+            if 'is not a number' in str(arg1):
+                return arg1
+            elif 'is not a number' in str(arg2):
+                return arg2
+
+            return math.pow(float(arg1), float(arg2))
+        elif node.value == 'gcd':
+            arg1 = self.visit(node.arg[0])
+            arg2 = self.visit(node.arg[1])
+
+            if arg1 == 'variable not found' or arg2 == 'variable not found':
+                return 'variable error'
+
+            if 'is not a number' in str(arg1):
+                return arg1
+            elif 'is not a number' in str(arg2):
+                return arg2
+
+            return math.gcd(int(float(arg1)), int(float(arg2)))
+        elif node.value == 'log':
+            arg1 = self.visit(node.arg[0])
+            arg2 = self.visit(node.arg[1])
+
+            if arg1 == 'variable not found' or arg2 == 'variable not found':
+                return 'variable error'
+
+            if 'is not a number' in str(arg1):
+                return arg1
+            elif 'is not a number' in str(arg2):
+                return arg2
+
+            return math.log(float(arg1), float(arg2))
         else:
-            lVariable = self.variable()
+            return 'function not found'
 
-            if self.currentToken.type != EOF:
-                self.eat(ASSIGNMENT)
+    def visitEnd(self, node):
+        sys.exit()
 
-                if self.currentToken.type == NUMBER:
-                    token = self.currentToken
-                    self.eat(NUMBER)
-                    
-                    result = self.setVariable(lVariable, token.value)
+    def visitError(self, node):
+        return node.message
 
-                    if self.currentToken.type != EOF:
-                        result = str(self.formatNumber(token.value)) + str(self.currentToken.value) + ' is not a number'
+    def interpret(self):
+        tree = self.parser.parse()
 
-                        return result
-
-                    self.eat(EOF)
-
-                    return result
-                else:
-                    rVariable = self.variable()
-                    
-                    if self.currentToken.type == LPAREN:
-                        self.eat(LPAREN)
-                        arg1 = self.arg()
-
-                        if isinstance(arg1, str):
-                            arg1Value = self.getVariable(arg1)
-
-                            if arg1Value is None:
-                                result = 'variable error'
-
-                                return result
-                        else:
-                            if self.currentToken.type != COMMA:
-                                result = str(self.formatNumber(arg1)) + str(self.currentToken.value) + ' is not a number'
-
-                                return result
-
-                            arg1Value = arg1
-
-                        self.eat(COMMA)
-                        arg2 = self.arg()
-
-                        if isinstance(arg2, str):
-                            arg2Value = self.getVariable(arg2)
-
-                            if arg2Value is None:
-                                result = 'variable error'
-
-                                return result
-                        else:
-                            if self.currentToken.type != RPAREN:
-                                result = str(self.formatNumber(arg2)) + str(self.currentToken.value) + ' is not a number'
-
-                                return result
-
-                            arg2Value = arg2
-                        
-                        self.eat(RPAREN)
-                        self.eat(EOF)
-
-                        calc = self.calculator(rVariable, arg1Value, arg2Value)
-
-                        if calc is None:
-                            result = 'function not found'
-                        else:
-                            result = self.setVariable(lVariable, calc)
-
-                        return result
-                    else:
-                        self.eat(EOF)
-                        rVarValue = self.getVariable(rVariable)
-
-                        if rVarValue is None:
-                            result = 'variable error'
-                        else:
-                            result = self.setVariable(lVariable, rVarValue)
-
-                        return result
-            else:
-                self.eat(EOF)
-                lVarValue = self.getVariable(lVariable)
-
-                if lVarValue is None:
-                    result = 'variable not found'
-                else:
-                    result = self.printNumber(lVarValue)
-                    
-                return result
+        return self.visit(tree)
 
 def main():
     variableDict = {}

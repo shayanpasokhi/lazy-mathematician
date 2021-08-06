@@ -164,6 +164,14 @@ class Parser:
         else:
             self.error()
 
+    def forwardError(self, token):
+        message = str(self.formatNumber(token.value)) + str(self.currentToken.value) + ' is not a number'
+
+        while self.currentToken.type != EOF:
+            self.currentToken = self.lexer.getNextToken()
+
+        return message
+
     def formatNumber(self, number):
         if number % 1 == 0:
             return int(number)
@@ -200,9 +208,7 @@ class Parser:
             self.eat(NUMBER)
 
             if self.currentToken.type != EOF:
-                message = str(self.formatNumber(token.value)) + str(self.currentToken.value) + ' is not a number'
-
-                return Error(message)
+                return Error(self.forwardError(token))
             return Num(token)
         else:
             node = self.function()
@@ -213,17 +219,13 @@ class Parser:
                 arg1 = self.arg()
 
                 if self.currentToken.type != COMMA:
-                    message = str(self.formatNumber(arg1)) + str(self.currentToken.value) + ' is not a number'
-
-                    return Error(message)
+                    return Error(self.forwardError(arg1))
                 root.arg.append(arg1)
                 self.eat(COMMA)
                 arg2 = self.arg()
 
                 if self.currentToken.type != RPAREN:
-                    message = str(self.formatNumber(arg2)) + str(self.currentToken.value) + ' is not a number'
-
-                    return Error(message)
+                    return Error(self.forwardError(arg2))
                 root.arg.append(arg2)
                 self.eat(RPAREN)
 
@@ -252,9 +254,11 @@ class Parser:
         elif self.currentToken.type == GCD:
             token = self.currentToken
             self.eat(GCD)
-        else:
+        elif self.currentToken.type == LOG:
             token = self.currentToken
             self.eat(LOG)
+        else:
+            return self.variable()
 
         return token
 
